@@ -2,7 +2,10 @@ package com.cinematic.cinematic;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -14,20 +17,25 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.MediaController;
+import android.widget.VideoView;
 
-public class TakeVideo extends Activity implements OnClickListener{
 
+public class StartScreen extends Activity implements OnClickListener{
+
+	//constants to represent each button when clicked
 	private static final int SELECT_VIDEO = 1;
 	private static final int RECORD_VIDEO = 2;
 	
 	private static final String TAG = "MainActivity";
 	
+	//create byte array variable for video
 	private byte[] videoFile;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_take_video);
+		setContentView(R.layout.start_screen_layout);
 		
 		setupButtonClickListeners();
 	}
@@ -35,6 +43,7 @@ public class TakeVideo extends Activity implements OnClickListener{
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
+		//not using right now, but will in future
 		getMenuInflater().inflate(R.menu.take_video, menu);
 		return true;
 	}
@@ -50,6 +59,7 @@ public class TakeVideo extends Activity implements OnClickListener{
 
 	private boolean readFromFile(String path){
 		
+		//read video file and check for exception
 		File file = new File(path);
 		try{
 			FileInputStream fis = new FileInputStream(file);
@@ -73,17 +83,24 @@ public class TakeVideo extends Activity implements OnClickListener{
 			switch(requestCode){
 			
 			case SELECT_VIDEO:
+				
+				//create Intent to launch PlayVideo activity
+				Intent playVideoIntent = new Intent(this, PlayVideo.class);
+				
+				//get Uri for selected video
 				Uri videoUri = data.getData();
+				//get path of Uri
 				String path = getPath(videoUri);
-				Log.i(TAG,path);
-				boolean success = readFromFile(path);
-					
-				if(success){
-						
-				}
-				else{
-					
-				}
+				
+				//pass path to the PlayVideo activity
+				playVideoIntent.putExtra("SELECTED_VIDEO_PATH", path);
+				
+				//start the PlayVideo activity
+				startActivity(playVideoIntent);
+				
+				//print the path to console
+				Log.i(TAG, path);
+
 				
 				break;
 			case RECORD_VIDEO:
@@ -100,6 +117,7 @@ public class TakeVideo extends Activity implements OnClickListener{
 	
 	private String getPath(Uri uri){
 		
+		//returns path from selected Uri
 		String[] projection = {MediaStore.Video.Media.DATA};
 		Cursor cursor = managedQuery(uri,projection,null,null,null);
 		int column_index = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
@@ -108,21 +126,27 @@ public class TakeVideo extends Activity implements OnClickListener{
 	}
 	
 	public void onClick(View v){
+		
+		//switch based on which button is pushed
 		switch(v.getId()) {
 		
+		//Exit button selected
 		case R.id.exit:
 			this.finish();
 			break;
 		
+		//Select Video button selected
 		case R.id.selectVideo:
+			//Intent that opens up gallery to select video
 			Intent intent = new Intent();
 			intent.setType("video/*");
 			intent.setAction(Intent.ACTION_GET_CONTENT);
 			startActivityForResult(Intent.createChooser(intent, "Select Video"), SELECT_VIDEO);
 			break;
 			
+		//Record Video button selected	
 		case R.id.recordVideo:
-			//File file = new File("cinematic.mp4");
+			//Intent that opens up default video record funtion
 			Intent recordIntent = new Intent();
 			recordIntent.setAction(MediaStore.ACTION_VIDEO_CAPTURE);
 			recordIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);

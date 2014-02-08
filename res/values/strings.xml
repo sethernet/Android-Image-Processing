@@ -3,7 +3,7 @@
 
     <string name="app_name">Cinematic</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="header_text">Welcome to Cinematic!</string>
     <string name="exit">Exit</string>
     <string name="selectVideo">Select Video</string>
 	<string name="recordVideo">Record Video</string>
