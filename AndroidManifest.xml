@@ -10,6 +10,8 @@
     
     <uses-feature android:name="android.hardware.camera"
                   android:required="false" />
+    
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -26,6 +28,7 @@
             </intent-filter>
         </activity>
         <activity android:name="PlayVideo"></activity>
+         <activity android:name="VideoEffect"></activity>
     </application>
 
 </manifest>

@@ -23,7 +23,7 @@ import android.widget.VideoView;
 
 public class StartScreen extends Activity implements OnClickListener{
 
-	//constants to represent each button when clicked
+	//constants for onActivityResult
 	private static final int SELECT_VIDEO = 1;
 	private static final int RECORD_VIDEO = 2;
 	
@@ -85,7 +85,7 @@ public class StartScreen extends Activity implements OnClickListener{
 			case SELECT_VIDEO:
 				
 				//create Intent to launch PlayVideo activity
-				Intent playVideoIntent = new Intent(this, PlayVideo.class);
+				Intent playVideoIntent = new Intent(this, VideoEffect.class);
 				
 				//get Uri for selected video
 				Uri videoUri = data.getData();

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/none" android:title="@string/noeffect"></item>
+    <item android:id="@+id/autofix" android:title="@string/autofix"></item>
+    <item android:id="@+id/bw" android:title="@string/bw"></item>
+    <item android:id="@+id/brightness" android:title="@string/brightness"></item>
+    <item android:id="@+id/contrast" android:title="@string/contrast"></item>
+    <item android:id="@+id/crossprocess" android:title="@string/crossprocess"></item>
+    <item android:id="@+id/documentary" android:title="@string/documentary"></item>
+    <item android:id="@+id/duotone" android:title="@string/duotone"></item>
+    <item android:id="@+id/filllight" android:title="@string/filllight"></item>
+    <item android:id="@+id/fisheye" android:title="@string/fisheye"></item>
+    <item android:id="@+id/flipvert" android:title="@string/flipvert"></item>
+    <item android:id="@+id/fliphor" android:title="@string/fliphor"></item>
+    <item android:id="@+id/grain" android:title="@string/grain"></item>
+    <item android:id="@+id/grayscale" android:title="@string/grayscale"></item>
+    <item android:id="@+id/lomoish" android:title="@string/lomoish"></item>
+    <item android:id="@+id/negative" android:title="@string/negative"></item>
+    <item android:id="@+id/posterize" android:title="@string/posterize"></item>
+    <item android:id="@+id/rotate" android:title="@string/rotate"></item>
+    <item android:id="@+id/saturate" android:title="@string/saturate"></item>
+    <item android:id="@+id/sepia" android:title="@string/sepia"></item>
+    <item android:id="@+id/sharpen" android:title="@string/sharpen"></item>
+    <item android:id="@+id/temperature" android:title="@string/temperature"></item>
+    <item android:id="@+id/tint" android:title="@string/tint"></item>
+    <item android:id="@+id/vignette" android:title="@string/vignette"></item>
+    
+
+</menu>

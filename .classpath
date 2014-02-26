@@ -5,10 +5,5 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
-	<classpathentry kind="lib" path="customizer.jar"/>
-	<classpathentry kind="lib" path="jmf.jar"/>
-	<classpathentry kind="lib" path="mediaplayer.jar"/>
-	<classpathentry kind="lib" path="multiplayer.jar"/>
-	<classpathentry kind="lib" path="sound.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
