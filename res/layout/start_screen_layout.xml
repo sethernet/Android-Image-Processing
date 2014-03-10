@@ -15,30 +15,31 @@
         android:text="@string/header_text" />
 
     <Button
-        android:id="@+id/selectVideo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/exit"
-        android:layout_below="@+id/headertext"
-        android:layout_marginTop="59dp"
-        android:text="@string/selectVideo" />
-
-    <Button
-        android:id="@+id/exit"
+        android:id="@+id/selectPicture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/headertext"
-        android:layout_below="@+id/selectVideo"
-        android:text="@string/exit" />
+        android:layout_below="@+id/headertext"
+        android:layout_marginTop="59dp"
+        android:text="@string/selectPicture" />
 
     <Button
-        android:id="@+id/recordVideo"
+        android:id="@+id/takePicture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/selectVideo"
+        android:layout_alignLeft="@+id/selectPicture"
         android:layout_below="@+id/headertext"
         android:layout_marginTop="14dp"
-        android:text="@string/recordVideo" />
+        android:text="@string/takePicture" />
 
+    <ImageView
+        android:id="@+id/imageThumb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/selectPicture"
+        android:src="@drawable/ic_launcher" />
 
 </RelativeLayout>

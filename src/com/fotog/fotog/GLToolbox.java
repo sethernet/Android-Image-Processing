@@ -1,4 +1,4 @@
-package com.cinematic.cinematic;
+package com.fotog.fotog;
 
 import android.opengl.GLES20;
 

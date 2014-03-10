@@ -1,5 +1,7 @@
-package com.cinematic.cinematic;
+package com.fotog.fotog;
 
+
+import com.fotog.fotog.R;
 
 import android.app.Activity;
 import android.content.Context;

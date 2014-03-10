@@ -1,15 +1,30 @@
-package com.cinematic.cinematic;
+package com.fotog.fotog;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Looper;
+import android.os.Parcelable;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,7 +32,9 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.MediaController;
+import android.widget.Toast;
 
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
@@ -29,6 +46,7 @@ import android.media.MediaPlayer.OnVideoSizeChangedListener;
 
 import android.opengl.EGLDisplay;
 import android.opengl.GLES20;
+import android.opengl.GLException;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.GLUtils;
@@ -36,8 +54,11 @@ import android.opengl.GLUtils;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
+import com.fotog.fotog.R;
 
+public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
+
+	private static final String SAVED_TEXTURE = null;
 	//Fields used for the effects
     private GLSurfaceView mEffectView;
     private int[] mTextures = new int[2];
@@ -48,20 +69,10 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
     private int mImageHeight;
     private boolean mInitialized = false;
     int mCurrentEffect;
+    int otherMenuOptions;
+	private File dir_image;
     
-    //Fields for grabbing frames from the video
-    private MediaMetadataRetriever mmr;
-    ArrayList<Bitmap> bitmapArray;
-    double duration;
-    long counter;
-    
-    MediaPlayer myMediaPlayer;
-    //these were used in a failed attempt to display video, may or may not need
-    //at some point
-	private SurfaceView surfaceView;
-	private SurfaceHolder surfaceHolder;
-	private Callback callback;
-	private static String videoPath;
+	private static String imagePath;
 	 //private GLToolbox glToolbox;
 
 	//sets effect chosen from menu
@@ -73,62 +84,11 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.gl_effects_view);
-        
-        //part the failed video attempt, will likely end up deleting
-     /**  getWindow().setFormat(PixelFormat.UNKNOWN); 
-        surfaceView = (SurfaceView) findViewById(R.id.surfaceView2);
-        surfaceHolder = surfaceView.getHolder();                
-        surfaceHolder.setFixedSize(176, 144);
-        surfaceHolder.addCallback((Callback) callback);
-        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);  */
-        
-        myMediaPlayer = new MediaPlayer();  
+        setContentView(R.layout.picture_effect_view);
         
         //get video intent from StartScreen.java
-        videoPath = getIntent().getStringExtra("SELECTED_VIDEO_PATH");
-        Uri videoUri = Uri.parse(videoPath); 
-        
-        //grab video frames
-        mmr = new MediaMetadataRetriever();
-        mmr.setDataSource(videoPath);
-        String stringDuration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-        duration = Double.parseDouble(stringDuration);
-        
-        //play audio file of video
-        myMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        myMediaPlayer.reset();     
-        
-        
-       try {
-            
-            myMediaPlayer.setOnVideoSizeChangedListener(videoSizeChangedListener);
-            
-            myMediaPlayer.setDataSource(videoPath);
-            myMediaPlayer.prepare();
-           
-            /*
-             * if you get Video Width and Height after prepare() here, it always return 0, 0!
-             */
-            mImageWidth = myMediaPlayer.getVideoWidth();
-            mImageHeight = myMediaPlayer.getVideoHeight();
-            
-            
-        } catch (IllegalArgumentException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-        } catch (SecurityException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-        } catch (IllegalStateException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-        } catch (IOException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-        }
-        myMediaPlayer.start(); 
-        
+        imagePath = getIntent().getStringExtra("SELECTED_IMAGE_PATH");
+        Uri pictureUri = Uri.parse(imagePath); 
         
         /**
          * Initializes renderer and tell it to only render when
@@ -144,15 +104,12 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
 
     private void loadTextures() {
         // Generate textures
-        GLES20.glGenTextures(2, mTextures, 0);
-
-       //convert video frame to bitmap
-        bitmapArray = new ArrayList<Bitmap>();
+        GLES20.glGenTextures(2, mTextures, 0); 
         
-        Bitmap bitmap = mmr.getFrameAtTime();
+        //create bitmap from path of selected image 
+        Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
         
         // Load input bitmap
-        //Bitmap bitmap = BitmapFactory.decodeFile(videoPath);
         mImageWidth = bitmap.getWidth();
         mImageHeight = bitmap.getHeight();
         mTexRenderer.updateTextureSize(mImageWidth, mImageHeight);
@@ -165,12 +122,9 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
         GLToolbox.initTexParams();
     }
     
-    public void addBitmap(Bitmap b){
-    	bitmapArray.add(b);
-    }
 
     //Effect methods
-    @SuppressLint("InlinedApi")
+    @SuppressLint({ "InlinedApi", "NewApi" })
 	private void initEffect() {
         EffectFactory effectFactory = mEffectContext.getFactory();
         if (mEffect != null) {
@@ -267,7 +221,8 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
 		}
     }
 
-    private void applyEffect() {
+    @SuppressLint("NewApi")
+	private void applyEffect() {
         mEffect.apply(mTextures[0], mImageWidth, mImageHeight, mTextures[1]);
     }
 
@@ -282,8 +237,22 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
         }
     }
 
-    @Override
+    
+    @SuppressLint("NewApi")
+	@Override
     public void onDrawFrame(GL10 gl) {
+    	
+    	//when save button is selected, first if statement runs; this has to take place in onDraw
+    	//in order to access gl
+    	if (otherMenuOptions == R.id.savepicture){
+    		CreateBitmapParams params = new CreateBitmapParams(0, 0, mImageWidth, mImageHeight, gl);
+            Looper.prepare();
+            CreateBitmapTask myTask = new CreateBitmapTask();
+            myTask.execute(params);            
+           
+            otherMenuOptions = 0;
+    	}
+    	
         if (!mInitialized) {
             //Only need to do this once
             mEffectContext = EffectContext.createWithCurrentGlContext();
@@ -296,7 +265,9 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
             initEffect();
             applyEffect();
         }
+        
         renderResult();
+        
     }
 
     @Override
@@ -318,11 +289,6 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
 
     }
     
-    public void surfaceCreated(SurfaceHolder holder) 
-    {
-    	myMediaPlayer.setDisplay(surfaceHolder);
-    	
-    }
     
     public void surfaceDestroyed(SurfaceHolder holder) 
     {
@@ -341,28 +307,181 @@ public class VideoEffect extends Activity implements GLSurfaceView.Renderer {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.video_effects_menu, menu);
+        inflater.inflate(R.menu.picture_effects_menu, menu);
+        
+        MenuInflater inflater2 = getMenuInflater();
+        inflater2.inflate(R.menu.saveandsharemenu, menu);
+        
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        	setCurrentEffect(item.getItemId());
+    	
+    	if (item.getItemId() == R.id.savepicture){
+    		otherMenuOptions = R.id.savepicture;
+    	}
+    	
+    	if (item.getItemId() == R.id.saveandshare){
+    		otherMenuOptions = R.id.saveandshare;
+    	}
+    	
+    		setCurrentEffect(item.getItemId());
             mEffectView.requestRender();
+            
             return true;	
     	
     }
-    
-  
-    OnVideoSizeChangedListener videoSizeChangedListener = new OnVideoSizeChangedListener(){
 
-    //supposed to make video match view size of phone, but not working right now	
-     @Override
-     public void onVideoSizeChanged(MediaPlayer arg0, int arg1, int arg2) {
-      int videoWidth = myMediaPlayer.getVideoWidth();
-      int videoHeight = myMediaPlayer.getVideoHeight();
-     }
-};
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
 
+		super.onSaveInstanceState(outState);
+		
+		outState.putSerializable(SAVED_TEXTURE, (Serializable) mCurrentEffect);
+
+	}
+	
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+
+		super.onRestoreInstanceState(savedInstanceState);
+		
+		mCurrentEffect = (Integer) savedInstanceState.getSerializable(SAVED_TEXTURE);
+	}
+	
+	
+
+	
+	//create parameters to be used in AsyncTask
+	private static class CreateBitmapParams {
+		int x; 
+		int y; 
+		int w; 
+		int h; 
+		GL10 gl;
+
+		CreateBitmapParams(int x, int y, int w, int h, GL10 gl) {
+	        this.x = x;
+	        this.y = y;
+	        this.w = w;
+	        this.h = h;
+	        this.gl = gl;
+	    }
+	}
+	
+	
+	//convert GL surface view to bitmap
+	class CreateBitmapTask extends AsyncTask<CreateBitmapParams, Void, Bitmap> {
+		
+		@Override
+		protected Bitmap doInBackground(CreateBitmapParams... params) throws OutOfMemoryError {
+			
+			int x = params[0].x;
+			int y = params[0].y;
+			int w = params[0].w;
+			int h = params[0].h;
+			GL10 gl = params[0].gl;
+			
+		    int bitmapBuffer[] = new int[w * h];
+		    int bitmapSource[] = new int[w * h];
+		    IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+		    intBuffer.position(0);
+
+		    try {
+		        gl.glReadPixels(x, y, w, h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, intBuffer);
+		        int offset1, offset2;
+		        for (int i = 0; i < h; i++) {
+		            offset1 = i * w;
+		            offset2 = (h - i - 1) * w;
+		            for (int j = 0; j < w; j++) {
+		                int texturePixel = bitmapBuffer[offset1 + j];
+		                int blue = (texturePixel >> 16) & 0xff;
+		                int red = (texturePixel << 16) & 0x00ff0000;
+		                int pixel = (texturePixel & 0xff00ff00) | red | blue;
+		                bitmapSource[offset2 + j] = pixel;
+		            }
+		        }
+		    } catch (GLException e) {
+		       
+		    }
+
+		    Bitmap bitmap = Bitmap.createBitmap(bitmapSource, w, h, Bitmap.Config.ARGB_8888);
+		    
+		  
+			return bitmap;
+        	
+		}    
+	        
+	        protected void onPostExecute(Bitmap result){
+	        	
+	        	//call SaveToDiskTask 
+	            SaveBitmapParams sbParams = new SaveBitmapParams(result);
+	            SaveToDiskTask saveTask = new SaveToDiskTask();
+	            saveTask.execute(sbParams);
+	            Looper.loop();
+	            
+	        }  
+		}
+	
+	 
+	//create bitmap parameters to be used in AsyncTask
+	private static class SaveBitmapParams {
+		
+		Bitmap bitmap;
+
+		SaveBitmapParams(Bitmap bitmap) {
+	        this.bitmap = bitmap;
+    }
+}  
+	
+	
+	class SaveToDiskTask extends AsyncTask<SaveBitmapParams, Integer, Void> {
+
+		@Override
+		protected Void doInBackground(SaveBitmapParams... params) {
+			
+			//bring in bitmap and save to disk
+			try {
+				
+			Bitmap bitmap = params[0].bitmap;
+			
+			 String extr = Environment.getExternalStorageDirectory().toString();
+	            File mFolder = new File(extr + "/Fotog");
+	            if (!mFolder.exists()) {
+	                mFolder.mkdir();
+	            }
+
+	            String s = "test.png";
+
+	            File f = new File(mFolder.getAbsolutePath(), s);
+
+	            FileOutputStream fos = null;
+	            fos = new FileOutputStream(f);
+	            bitmap.compress(CompressFormat.JPEG, 100, fos);
+	            fos.flush();
+	            fos.close();
+
+	            bitmap.recycle();
+
+	            Toast.makeText(getBaseContext(), "image saved", 5000).show();
+	        } catch (Exception e) {
+	            Toast.makeText(getBaseContext(), "Failed To Save", 5000).show();
+	        }
+			
+			
+			return null;
+
+		}
+		
+		 protected void onPostExecute(int mCurrentEffect){
+	        	
+			        
+	            
+	        } 
+		
+		
+	}
+	
 
 }
