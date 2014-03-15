@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.facebook.android.Facebook;
 import com.fotog.fotog.R;
 
 import android.media.AudioManager;
@@ -42,6 +43,11 @@ public class StartScreen extends Activity implements OnClickListener{
 	private byte[] videoFile;
 	private Bitmap newImage;
 	private ImageView imageThumb;
+	//**NOTE** All of the Facebook code is commented out right now because it was crashing the app
+	//String Facebook_APP_ID = (getString(R.string.facebook_app_id));
+	//Facebook fb = new Facebook(Facebook_APP_ID);
+	//ImageView fb_pic, fb_login_button;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,11 +55,25 @@ public class StartScreen extends Activity implements OnClickListener{
 		setContentView(R.layout.start_screen_layout);
 		
 		setupButtonClickListeners();
-		
-		//get reference to image view that will display
-		imageThumb = (ImageView) findViewById(R.id.imageThumb);
-		
+
+		//Commented-out Facebook code, to be used eventually
+		//fb_login_button = (ImageView)findViewById(R.id.facebook_login); 
+		//fb_pic = (ImageView)findViewById(R.id.facebook_profile_pic);
+		//fb_login_button.setOnClickListener(this);
+		//updateFBButton();
 	}
+
+	/**  Additional commented-out FB code
+	@SuppressWarnings("deprecation")
+	private void updateFBButton() {
+
+		if(fb.isSessionValid()){
+			fb_login_button.setImageResource(R.drawable.facebook_logout);
+		}else{
+			//code to log in to fb
+		}
+		
+	} */
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -151,7 +171,16 @@ public class StartScreen extends Activity implements OnClickListener{
 		return cursor.getString(column_index);
 	}
 	
+	
 	public void onClick(View v){
+		
+		/**
+		 *  
+		if(fb.isSessionValid()){
+			//button to log out of fb
+		}else{
+			//code to log in to fb
+		} */
 		
 		//switch based on which button is pushed
 		switch(v.getId()) {

@@ -33,13 +33,18 @@
         android:text="@string/takePicture" />
 
     <ImageView
-        android:id="@+id/imageThumb"
+        android:id="@+id/facebook_profile_pic"
+        android:visibility="invisible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <ImageView
+        android:id="@+id/facebook_login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignLeft="@+id/selectPicture"
         android:layout_below="@+id/selectPicture"
-        android:src="@drawable/ic_launcher" />
+        android:layout_marginTop="50dp"
+        android:src="@drawable/facebook_login" />
 
 </RelativeLayout>

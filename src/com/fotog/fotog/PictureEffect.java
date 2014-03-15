@@ -1,48 +1,26 @@
 package com.fotog.fotog;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.Serializable;
 import java.nio.IntBuffer;
-import java.util.ArrayList;
-import java.util.Calendar;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Looper;
-import android.os.Parcelable;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
-import android.view.SurfaceView;
-import android.view.View;
-import android.widget.MediaController;
 import android.widget.Toast;
 
-import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
 import android.media.effect.Effect;
 import android.media.effect.EffectContext;
 import android.media.effect.EffectFactory;
-import android.media.MediaPlayer.OnVideoSizeChangedListener;
 
 import android.opengl.EGLDisplay;
 import android.opengl.GLES20;
@@ -70,7 +48,6 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
     private boolean mInitialized = false;
     int mCurrentEffect;
     int otherMenuOptions;
-	private File dir_image;
     
 	private static String imagePath;
 	 //private GLToolbox glToolbox;
@@ -86,12 +63,14 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.picture_effect_view);
         
-        //get video intent from StartScreen.java
+        /**
+         * Get video intent from StartScreen.java
+         */
         imagePath = getIntent().getStringExtra("SELECTED_IMAGE_PATH");
         Uri pictureUri = Uri.parse(imagePath); 
         
         /**
-         * Initializes renderer and tell it to only render when
+         * Set up GLSurfaceView renderer and tell it to only render when
          * requested with the RENDERMODE_WHEN_DIRTY option
          */
         mEffectView = (GLSurfaceView) findViewById(R.id.glsurfaceview1);
@@ -123,7 +102,9 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
     }
     
 
-    //Effect methods
+    /**
+     * The method to specify chosen effect and get parameters for effect
+     */
     @SuppressLint({ "InlinedApi", "NewApi" })
 	private void initEffect() {
         EffectFactory effectFactory = mEffectContext.getFactory();
@@ -242,19 +223,19 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
 	@Override
     public void onDrawFrame(GL10 gl) {
     	
-    	//when save button is selected, first if statement runs; this has to take place in onDraw
+    	//when save button is selected, the first 'if statement' runs; this has to take place in onDraw
     	//in order to access gl
     	if (otherMenuOptions == R.id.savepicture){
     		CreateBitmapParams params = new CreateBitmapParams(0, 0, mImageWidth, mImageHeight, gl);
             Looper.prepare();
             CreateBitmapTask myTask = new CreateBitmapTask();
             myTask.execute(params);            
-           
+            Looper.loop();
             otherMenuOptions = 0;
     	}
     	
         if (!mInitialized) {
-            //Only need to do this once
+            //Only need to do this once, initializes the picture
             mEffectContext = EffectContext.createWithCurrentGlContext();
             mTexRenderer.init();
             loadTextures();
@@ -285,7 +266,6 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
     
     public void surfaceChanged(SurfaceHolder holder, int format, int width,
             int height) {
-        // TODO Auto-generated method stub
 
     }
     
@@ -295,15 +275,7 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
 
     }
 
-    public void onCompletion(MediaPlayer mp)
-    {
-        mp.stop();
-
-        finish();
-    }
-    
-    
-
+   
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -320,19 +292,27 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
     	
     	if (item.getItemId() == R.id.savepicture){
     		otherMenuOptions = R.id.savepicture;
+    		mEffectView.requestRender();
     	}
     	
-    	if (item.getItemId() == R.id.saveandshare){
+    	else if (item.getItemId() == R.id.saveandshare){
     		otherMenuOptions = R.id.saveandshare;
     	}
     	
+    	else {
+    		
     		setCurrentEffect(item.getItemId());
             mEffectView.requestRender();
-            
+    	}
+    	
             return true;	
     	
     }
 
+    
+    /**
+     * Allows orientation to change without loss of data
+     */
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 
@@ -383,105 +363,55 @@ public class PictureEffect extends Activity implements GLSurfaceView.Renderer {
 			int h = params[0].h;
 			GL10 gl = params[0].gl;
 			
-		    int bitmapBuffer[] = new int[w * h];
-		    int bitmapSource[] = new int[w * h];
-		    IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
-		    intBuffer.position(0);
-
-		    try {
-		        gl.glReadPixels(x, y, w, h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, intBuffer);
-		        int offset1, offset2;
-		        for (int i = 0; i < h; i++) {
-		            offset1 = i * w;
-		            offset2 = (h - i - 1) * w;
-		            for (int j = 0; j < w; j++) {
-		                int texturePixel = bitmapBuffer[offset1 + j];
-		                int blue = (texturePixel >> 16) & 0xff;
-		                int red = (texturePixel << 16) & 0x00ff0000;
-		                int pixel = (texturePixel & 0xff00ff00) | red | blue;
-		                bitmapSource[offset2 + j] = pixel;
-		            }
-		        }
-		    } catch (GLException e) {
-		       
-		    }
-
-		    Bitmap bitmap = Bitmap.createBitmap(bitmapSource, w, h, Bitmap.Config.ARGB_8888);
-		    
-		  
-			return bitmap;
-        	
+			
+			Looper.prepare();
+			int b[]=new int[w*h];
+	         int bt[]=new int[w*h];
+	         IntBuffer ib=IntBuffer.wrap(b);
+	         ib.position(0);
+	         gl.glReadPixels(x, y, w, h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, ib);
+	         for(int i=0; i<h; i++){
+	          
+	        	 // OpenGL bitmap is incompatible with Android bitmap, so this corrects it
+	              for(int j=0; j<w; j++)
+	              {
+	                   int pix=b[i*w+j];
+	                   int pb=(pix>>16)&0xff;
+	                   int pr=(pix<<16)&0x00ff0000;
+	                   int pix1=(pix&0xff00ff00) | pr | pb;
+	                   bt[(h-i-1)*w+j]=pix1;
+	              }
+	         }                  
+	         Bitmap sb = Bitmap.createBitmap(bt, w, h, Bitmap.Config.ARGB_8888);
+	         
+	         return sb;
+			
 		}    
 	        
 	        protected void onPostExecute(Bitmap result){
 	        	
-	        	//call SaveToDiskTask 
-	            SaveBitmapParams sbParams = new SaveBitmapParams(result);
-	            SaveToDiskTask saveTask = new SaveToDiskTask();
-	            saveTask.execute(sbParams);
-	            Looper.loop();
+	        	SaveImage saveFile = new SaveImage();
+	        	saveFile.Save(result);
+	        	
+	        	//I haven't yet figured out how to test whether it was saved in the SaveImage.java class
+	        	//so for now I'm just calling ableToSave() as default 
+	        	ableToSave();
+	        	Looper.loop();
 	            
 	        }  
 		}
 	
-	 
-	//create bitmap parameters to be used in AsyncTask
-	private static class SaveBitmapParams {
+	
+	private void ableToSave() {
+
+		Toast.makeText(this, "Picture Saved", Toast.LENGTH_SHORT).show();
 		
-		Bitmap bitmap;
-
-		SaveBitmapParams(Bitmap bitmap) {
-	        this.bitmap = bitmap;
-    }
-}  
-	
-	
-	class SaveToDiskTask extends AsyncTask<SaveBitmapParams, Integer, Void> {
-
-		@Override
-		protected Void doInBackground(SaveBitmapParams... params) {
-			
-			//bring in bitmap and save to disk
-			try {
-				
-			Bitmap bitmap = params[0].bitmap;
-			
-			 String extr = Environment.getExternalStorageDirectory().toString();
-	            File mFolder = new File(extr + "/Fotog");
-	            if (!mFolder.exists()) {
-	                mFolder.mkdir();
-	            }
-
-	            String s = "test.png";
-
-	            File f = new File(mFolder.getAbsolutePath(), s);
-
-	            FileOutputStream fos = null;
-	            fos = new FileOutputStream(f);
-	            bitmap.compress(CompressFormat.JPEG, 100, fos);
-	            fos.flush();
-	            fos.close();
-
-	            bitmap.recycle();
-
-	            Toast.makeText(getBaseContext(), "image saved", 5000).show();
-	        } catch (Exception e) {
-	            Toast.makeText(getBaseContext(), "Failed To Save", 5000).show();
-	        }
-			
-			
-			return null;
-
 		}
-		
-		 protected void onPostExecute(int mCurrentEffect){
-	        	
-			        
-	            
-	        } 
-		
-		
-	}
 	
+	private void UnableToSave() {
+		Toast.makeText(this, "Picture cannot be saved to gallery", Toast.LENGTH_SHORT).show();
+		}
+	
+
 
 }
